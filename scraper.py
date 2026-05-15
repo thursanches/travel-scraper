@@ -40,6 +40,14 @@ def parsear_html(html_content):
     print(f"Encontrados {len(cards)} hotéis na página.")
     
     for card in cards:
+        # Dentro do seu loop for card in cards:
+        hoteis.append({
+            "Data_Coleta": datetime.now().strftime("%Y-%m-%d %H:%M"),
+            "Nome": nome,
+            "Preco": preco,
+            "Nota": card.find('div', {'data-testid': 'review-score-badge'}).text.strip() if card.find('div', {'data-testid': 'review-score-badge'}) else "N/A",
+            "Localizacao": card.find('span', {'data-testid': 'address'}).text.strip() if card.find('span', {'data-testid': 'address'}) else "N/A"
+        })
         nome_elem = card.find('div', {'data-testid': 'title'})
         nome = nome_elem.text.strip() if nome_elem else "N/A"
         
