@@ -32,6 +32,19 @@ async def extrair_dados_booking():
         
     return html
 
+def filtrar_por_preco_maximo(lista_hoteis, preco_maximo):
+    hoteis_filtrados = []
+    for hotel in lista_hoteis:
+        preco_texto = hotel.get("Preco", "N/A")
+        if preco_texto != "N/A":
+            limpo = ''.join(c for c in preco_texto if c.isdigit())
+            preco_numerico = float(limpo) if limpo else 0.0
+            if preco_numerico <= preco_maximo:
+                hoteis_filtrados.append(hotel)
+        else:
+            hoteis_filtrados.append(hotel)
+    return hoteis_filtrados
+
 def parsear_html(html_content):
     soup = BeautifulSoup(html_content, 'html.parser')
     hoteis = []
@@ -40,19 +53,18 @@ def parsear_html(html_content):
     print(f"Encontrados {len(cards)} hotéis na página.")
     
     for card in cards:
-        # Dentro do seu loop for card in cards:
-        hoteis.append({
-            "Data_Coleta": datetime.now().strftime("%Y-%m-%d %H:%M"),
-            "Nome": nome,
-            "Preco": preco,
-            "Nota": card.find('div', {'data-testid': 'review-score-badge'}).text.strip() if card.find('div', {'data-testid': 'review-score-badge'}) else "N/A",
-            "Localizacao": card.find('span', {'data-testid': 'address'}).text.strip() if card.find('span', {'data-testid': 'address'}) else "N/A"
-        })
         nome_elem = card.find('div', {'data-testid': 'title'})
         nome = nome_elem.text.strip() if nome_elem else "N/A"
         
         preco_elem = card.find('span', {'data-testid': 'price-and-discounted-price'})
         preco = preco_elem.text.strip() if preco_elem else "N/A"
+        hoteis.append({
+            "Nome": nome,
+            "Preco": preco,
+            "Data_Coleta": datetime.now().strftime("%Y-%m-%d %H:%M"),
+            "Nota": card.find('div', {'data-testid': 'review-score-badge'}).text.strip() if card.find('div', {'data-testid': 'review-score-badge'}) else "N/A",
+            "Localizacao": card.find('span', {'data-testid': 'address'}).text.strip() if card.find('span', {'data-testid': 'address'}) else "N/A"
+        })
         
         hoteis.append({
             "Data_Coleta": datetime.now().strftime("%Y-%m-%d %H:%M"),
@@ -66,6 +78,9 @@ async def main():
     try:
         html = await extrair_dados_booking()
         lista_hoteis = parsear_html(html)
+        
+        limite_preco = 700
+        lista_hoteis = filtrar_por_preco_maximo(lista_hoteis, limite_preco)
         
         if lista_hoteis:
             df = pd.DataFrame(lista_hoteis)
